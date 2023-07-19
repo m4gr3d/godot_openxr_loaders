@@ -1,0 +1,49 @@
+#!/usr/bin/env python
+from glob import glob
+from pathlib import Path
+
+env = SConscript("../thirdparty/godot-cpp/SConstruct")
+
+opts = Variables('custom.py')
+opts.Update(env)
+
+# Add source files.
+env.Append(CPPPATH=[
+    "src/main/cpp",
+    "src/main/cpp/include",
+    "../thirdparty/openxr/include/",
+    "libs/ovr_openxr_mobile_sdk/OpenXR/Include"
+    ])
+sources = Glob("src/main/cpp/*.cpp")
+
+binary_path = '../demo/addons/godotopenxrvendors/meta/.bin'
+project_name = 'godotopenxrmeta'
+
+# Create the library target
+if env["platform"] == "android":
+    print("Use gradle to generate the Android binaries")
+    Exit(255)
+elif env["platform"] == "macos":
+    library = env.SharedLibrary(
+        "{0}/lib{1}.{2}.{3}.framework/{1}.{2}.{3}".format(
+            binary_path,
+            project_name,
+            env["platform"],
+            env["target"],
+        ),
+        source=sources,
+    )
+else:
+    library = env.SharedLibrary(
+        "{}/lib{}.{}.{}.{}{}".format(
+            binary_path,
+            project_name,
+            env["platform"],
+            env["target"],
+            env["arch"],
+            env["SHLIBSUFFIX"],
+        ),
+        source=sources,
+    )
+
+Default(library)
